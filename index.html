@@ -1,0 +1,363 @@
+<!-- Line 1: HTML Document Start -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Best Friend Day! 🫶💖</title>
+<style>
+  /* Global Page Design & Animated Background */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: linear-gradient(135deg, #120c1f, #2a1b4e, #5a189a, #7b2cbf);
+    background-size: 400% 400%;
+    animation: gradientBG 10s ease infinite;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 15px;
+  }
+  @keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Card Container Design */
+  .card-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 100%;
+    max-width: 450px;
+    border-radius: 24px;
+    padding: 25px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    text-align: center;
+    position: relative;
+  }
+
+  input[type="radio"] { display: none; }
+  .page { display: none; animation: fadeIn 0.4s ease-in-out forwards; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Tab Navigation Mechanics */
+  #tab1:checked ~ .card-container #page1,
+  #tab2:checked ~ .card-container #page2,
+  #tab3:checked ~ .card-container #page3 { display: block; }
+
+  /* Navigation Buttons */
+  .nav-btn {
+    display: inline-block;
+    background: linear-gradient(45deg, #9d4edd, #e0aaff);
+    color: #120c1f;
+    padding: 12px 24px;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: 0.3s transform ease;
+    font-size: 13px;
+    text-transform: uppercase;
+    border: none;
+  }
+  .nav-btn:hover { transform: scale(1.03); }
+
+  /* Custom Music Control Button */
+  .play-control-btn {
+    display: inline-block;
+    background: linear-gradient(45deg, #ff477e, #ff7096);
+    color: #fff;
+    padding: 10px 20px;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    margin-bottom: 15px;
+    transition: 0.3s all ease;
+    font-size: 12px;
+    text-transform: uppercase;
+    border: none;
+    box-shadow: 0 4px 15px rgba(255, 71, 126, 0.4);
+  }
+  .play-control-btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 20px rgba(255, 71, 126, 0.6);
+  }
+
+  h1 { font-size: 1.5rem; margin-bottom: 15px; color: #e0aaff; text-shadow: 0 0 10px rgba(224, 170, 255, 0.4); white-space: nowrap; }
+  
+  .custom-message {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 18px;
+    border-radius: 16px;
+    margin: 15px 0;
+    border-left: 4px solid #9d4edd;
+    text-align: center;
+  }
+
+  /* Fixed Size Media Frame */
+  .media-box {
+    width: 100%;
+    height: 300px; 
+    border-radius: 16px;
+    margin: 15px 0;
+    overflow: hidden; 
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.2);
+    position: relative;
+  }
+  .media-box img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover; 
+  }
+
+  /* Fixed Size Slider Frame for Page 2 */
+  .slider-wrapper {
+    position: relative;
+    width: 100%;
+    height: 300px; 
+    margin: 15px 0;
+    overflow: hidden; 
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .image-slider {
+    display: flex;
+    width: 200%; 
+    height: 100%;
+    transition: transform 0.5s ease-in-out;
+  }
+  .slider-img {
+    width: 50%; 
+    height: 100%;
+    object-fit: cover; 
+    background: rgba(0,0,0,0.2);
+  }
+  .slider-arrows {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    transform: translateY(-50%);
+    padding: 0 10px;
+    pointer-events: none;
+  }
+  .arrow {
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: bold;
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  }
+
+  /* Footer and Branding Tags */
+  .music-container {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 10px 15px;
+    border-radius: 50px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .music-title { font-size: 12px; color: #e0aaff; font-weight: bold; }
+  .special-quote {
+    font-style: italic;
+    font-size: 0.95rem;
+    color: #fff;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.2);
+    text-shadow: 0 0 8px rgba(255,255,255,0.5);
+  }
+
+  .execution-tag {
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.15), rgba(79, 172, 254, 0.25));
+    border: 1px solid #4facfe;
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 25px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    color: #00f2fe;
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+    text-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
+    display: inline-block;
+    width: 100%;
+  }
+  .execution-tag span {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+    font-weight: bold;
+    display: block;
+    margin-top: 4px;
+    font-size: 1.1rem;
+    text-shadow: 0 0 10px #e0aaff;
+  }
+
+  #yt-player { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<div id="yt-player"></div>
+
+<input type="radio" name="card-nav" id="tab1" checked>
+<input type="radio" name="card-nav" id="tab2">
+<input type="radio" name="card-nav" id="tab3">
+
+<div class="card-container">
+
+  <!-- Music Status Top Bar -->
+  <div class="music-container">
+    <div class="music-title">🎵 Music: Dil E Tute Hue Hai Qayamat ❤️</div>
+  </div>
+
+  <!-- PAGE 1 -->
+  <div class="page" id="page1">
+    <h1>💙✨ BEST FRIEND DAY ✨💙</h1>
+    <button class="play-control-btn" id="musicToggleBtn" onclick="toggleMusic()">▶️ Play Music</button>
+
+    <div class="custom-message">
+      Kabhi kabhi zindagi mein kuch log aise mil jate hain jo sirf dost nahi, balki family ban jate hain. 🤗💫
+    </div>
+    
+    <div class="media-box">
+      <img src="https://i.postimg.cc/SQnpPwTN/giphy.gif" alt="Bestie GIF">
+    </div>
+    
+    <label for="tab2" class="nav-btn">Our Memories 📸</label>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="page" id="page2">
+    <h1>✨ 𝑴𝒆𝒎𝒐𝒓𝒊𝒆𝒔 ✨</h1>
+    
+    <div class="slider-wrapper">
+      <div class="image-slider" id="sliderObj">
+        <!-- Slide 1 -->
+        <img class="slider-img" src="https://i.postimg.cc/0NN25xRh/IMG-20260607-130503.png" alt="Memory 1">
+        <!-- Slide 2: Aapki nayi bheji hui photo yahan set ho gayi hai -->
+        <img class="slider-img" src="https://i.postimg.cc/NfL30M5n/561229928-17935140141093583-679653411955665729-n-webp.jpg" alt="Memory 2">
+      </div>
+      <div class="slider-arrows">
+        <button class="arrow" onclick="slideImg(0)">❮</button>
+        <button class="arrow" onclick="slideImg(1)">❯</button>
+      </div>
+    </div>
+
+    <div class="custom-message">
+      Shukriya har us lamhe ke liye jahan tum saath rahe, har us hansi ke liye jo humne share ki, aur har us support ke liye jo bina maange mil gaya. 🫶😊
+      <br><br>
+      Dosti ka matlab sirf roz baat karna nahi hota, balki yeh jaan'na hota hai ke chahe kitna bhi waqt guzar jaye, ek dost ke liye respect aur care hamesha wahi rahegi. 💯❤️
+    </div>
+    <label for="tab3" class="nav-btn">Final Page 🎁</label>
+  </div>
+
+  <!-- PAGE 3 -->
+  <div class="page" id="page3">
+    <h1>🎉 Udasi Se Rahe Tu Door 🎉</h1>
+    
+    <div class="custom-message">
+      Allah tumhein hamesha khush rakhe, sehat aur kamyabi de, aur tumhari zindagi ko khushiyon se bhar de. 🤲🌸
+    </div>
+
+    <!-- Last Page Photo Link -->
+    <div class="media-box">
+      <img src="https://i.postimg.cc/tg1QmgHx/image.webp" alt="Friendship Image">
+    </div>
+
+    <div class="special-quote">
+      🎉🥳 Happy Best Friend Day! 🥳🎉<br>
+      "Stay blessed, stay happy, and thanks for being such an amazing friend."
+    </div>
+
+    <div class="execution-tag">
+      [SYSTEM.EXE] executed by
+      <span>⋆𝒌𝒂𝒛𝒊𝒎𐙚</span>
+    </div>
+
+    <label for="tab1" class="nav-btn" style="margin-top: 15px;">Restart 🔄</label>
+  </div>
+
+</div>
+
+<!-- YouTube and Slider JavaScript Logic -->
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+  let player;
+  let isPlaying = false;
+  const toggleBtn = document.getElementById('musicToggleBtn');
+  
+  function onYouTubeIframeAPIReady() {
+    player = new YT.Player('yt-player', {
+      height: '1',
+      width: '1',
+      videoId: 'SHO8XkOloBM',
+      playerVars: {
+        'start': 87, // Exact 1:27 ("Dil e tute hue hai qayamat...")
+        'controls': 0,
+        'disablekb': 1,
+        'modestbranding': 1,
+        'rel': 0
+      },
+      events: { 'onReady': onPlayerReady }
+    });
+  }
+
+  function onPlayerReady(event) {}
+
+  function toggleMusic() {
+    if (!player || typeof player.playVideo !== 'function') return;
+    if (!isPlaying) {
+      player.seekTo(87, true);
+      player.playVideo();
+      toggleBtn.innerHTML = "⏸️ Pause Music";
+      isPlaying = true;
+    } else {
+      player.pauseVideo();
+      toggleBtn.innerHTML = "▶️ Play Music";
+      isPlaying = false;
+    }
+  }
+
+  function slideImg(index) {
+    const slider = document.getElementById('sliderObj');
+    if(index === 1) {
+      slider.style.transform = "translateX(-50%)"; 
+    } else {
+      slider.style.transform = "translateX(0%)"; 
+    }
+  }
+
+  document.querySelectorAll('input[name="card-nav"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (player && typeof player.playVideo === 'function' && isPlaying) {
+        player.playVideo(); 
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
+
