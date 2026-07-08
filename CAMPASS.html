@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Compass</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --red: #e8281c;
+    --gold: #d4af37;
+    --line: #2a2a2a;
+    --text-dim: #6b6b6b;
+    --text: #f0f0f0;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: var(--text);
+    /* dvh = dynamic viewport height, handles mobile browser chrome correctly */
+    height: 100dvh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: max(20px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom));
+    position: relative;
+  }
+
+  .vignette {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at 50% 38%, rgba(232,40,28,0.07), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #permBtn {
+    display: none;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 24px;
+    font-size: clamp(11px, 3vw, 13px);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    z-index: 5;
+  }
+
+  #statusMsg {
+    font-size: clamp(9px, 2.6vw, 11px);
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    z-index: 5;
+    text-align: center;
+    min-height: 14px;
+  }
+
+  .readout { text-align: center; z-index: 5; }
+
+  #levelReadout { text-align: center; z-index: 5; display: none; }
+  #levelDeg {
+    font-size: clamp(34px, 12vmin, 60px);
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  #levelStatus {
+    font-size: clamp(10px, 3vw, 13px);
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    font-weight: 600;
+    margin-top: 4px;
+    transition: color 0.2s;
+  }
+
+  #degText {
+    font-size: clamp(34px, 12vmin, 60px);
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #dirText {
+    font-size: clamp(10px, 3vw, 13px);
+    letter-spacing: 3px;
+    color: var(--red);
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .dial-wrap {
+    position: relative;
+    /* scales with smaller viewport dimension, capped so it never overflows */
+    width: min(72vmin, 320px);
+    height: min(72vmin, 320px);
+    margin: 2vh 0;
+    z-index: 5;
+    flex-shrink: 1;
+  }
+
+  .dial-wrap svg { display: block; width: 100%; height: 100%; }
+
+  #levelWrap { display: none; }
+
+  #bubble, #bubbleDot {
+    transition: cx 0.1s linear, cy 0.1s linear;
+  }
+  #bubble.is-level {
+    stroke: var(--gold) !important;
+    filter: drop-shadow(0 0 8px var(--gold));
+    animation: pulseLevel 1s ease-in-out infinite;
+  }
+  #bubbleDot.is-level {
+    fill: var(--gold) !important;
+  }
+  @keyframes pulseLevel {
+    0%, 100% { stroke-width: 2.5; }
+    50% { stroke-width: 4; }
+  }
+
+  #pointerSvg { position: absolute; top: 0; left: 0; z-index: 3; pointer-events: none; }
+
+  #dial {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    transform: rotate(0deg);
+    transition: transform 0.08s linear;
+  }
+
+  .data-row {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    max-width: 340px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 0;
+    z-index: 5;
+    flex-shrink: 0;
+  }
+
+  .data-item { text-align: center; flex: 1; }
+  .data-label { font-size: clamp(8px, 2.2vw, 10px); letter-spacing: 1.5px; color: var(--text-dim); }
+  .data-value { font-size: clamp(12px, 3.4vw, 15px); font-weight: 600; margin-top: 3px; color: var(--gold); }
+
+  .bottom-nav {
+    display: flex;
+    width: 100%;
+    max-width: 340px;
+    margin-top: 10px;
+    z-index: 5;
+    flex-shrink: 0;
+  }
+
+  .nav-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    font-size: clamp(10px, 2.8vw, 12px);
+    letter-spacing: 1px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  #navCompass { color: var(--text); border-bottom: 2px solid var(--red); }
+  #navLevel { color: var(--text-dim); border-bottom: 2px solid var(--line); }
+
+  .credit-tag {
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    opacity: 0.85;
+    font-weight: 600;
+    margin-top: 8px;
+    text-align: center;
+    z-index: 5;
+    flex-shrink: 0;
+  }
+  .credit-tag .gold-name { color: var(--gold); opacity: 1; }
+
+  /* Landscape: lay readout + dial side by side so dial isn't squeezed vertically */
+  @media (orientation: landscape) and (max-height: 500px) {
+    body { flex-direction: row; justify-content: space-evenly; padding: 10px 16px; }
+    .readout, #levelReadout, .data-row, .bottom-nav, .credit-tag { display: none; }
+    .dial-wrap { width: min(80vh, 300px); height: min(80vh, 300px); margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="vignette"></div>
+
+<button id="permBtn">ALLOW COMPASS ACCESS</button>
+<div id="statusMsg">Initializing…</div>
+
+<div class="readout" id="compassReadout">
+  <div id="degText">0°</div>
+  <div id="dirText">N</div>
+</div>
+
+<div id="levelReadout">
+  <div id="levelDeg">0.0°</div>
+  <div id="levelStatus">ADJUST TO LEVEL</div>
+</div>
+
+<div class="dial-wrap" id="compassWrap">
+  <svg id="pointerSvg" viewBox="0 0 280 280">
+    <polygon points="140,8 150,34 130,34" fill="var(--red)"/>
+  </svg>
+
+  <div id="dial">
+    <svg viewBox="0 0 280 280">
+      <circle cx="140" cy="140" r="132" fill="none" stroke="var(--gold)" stroke-width="1" opacity="0.4"/>
+      <circle cx="140" cy="140" r="128" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+      <circle cx="140" cy="140" r="108" fill="none" stroke="var(--line)" stroke-width="1"/>
+      <g id="ticks"></g>
+      <g id="labels" font-family="Helvetica Neue, Arial, sans-serif" text-anchor="middle" dominant-baseline="middle"></g>
+      <circle cx="140" cy="140" r="4" fill="var(--red)"/>
+    </svg>
+  </div>
+</div>
+
+<div class="dial-wrap" id="levelWrap">
+  <svg viewBox="0 0 280 280">
+    <circle cx="140" cy="140" r="114" fill="none" stroke="var(--gold)" stroke-width="1" opacity="0.4"/>
+    <circle cx="140" cy="140" r="110" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+    <circle cx="140" cy="140" r="70" fill="none" stroke="var(--line)" stroke-width="1"/>
+    <line x1="140" y1="22" x2="140" y2="258" stroke="var(--line)" stroke-width="1"/>
+    <line x1="22" y1="140" x2="258" y2="140" stroke="var(--line)" stroke-width="1"/>
+    <circle cx="140" cy="140" r="2.5" fill="var(--text-dim)"/>
+    <circle id="bubble" cx="140" cy="140" r="22" fill="none" stroke="var(--red)" stroke-width="2.5"/>
+    <circle id="bubbleDot" cx="140" cy="140" r="3" fill="var(--red)"/>
+  </svg>
+</div>
+
+<div class="data-row" id="dataRow">
+  <div class="data-item">
+    <div class="data-label">NL</div>
+    <div class="data-value" id="nlVal">0.0°</div>
+  </div>
+  <div class="data-item">
+    <div class="data-label">EL</div>
+    <div class="data-value" id="elVal">0.0°</div>
+  </div>
+  <div class="data-item">
+    <div class="data-label">ELEVATION</div>
+    <div class="data-value" id="elevVal">— m</div>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <div class="nav-item" id="navCompass">COMPASS</div>
+  <div class="nav-item" id="navLevel">LEVEL</div>
+</div>
+
+<div class="credit-tag">[SYSTEM.EXE] executed by <span class="gold-name">⋆𝒌𝒂𝒛𝒊𝒎𐙚</span></div>
+
+<script>
+(function() {
+  const dial = document.getElementById('dial');
+  const degText = document.getElementById('degText');
+  const dirText = document.getElementById('dirText');
+  const statusMsg = document.getElementById('statusMsg');
+  const permBtn = document.getElementById('permBtn');
+  const nlVal = document.getElementById('nlVal');
+  const elVal = document.getElementById('elVal');
+  const navLevel = document.getElementById('navLevel');
+  const navCompass = document.getElementById('navCompass');
+  const compassReadout = document.getElementById('compassReadout');
+  const compassWrap = document.getElementById('compassWrap');
+  const levelReadout = document.getElementById('levelReadout');
+  const levelWrap = document.getElementById('levelWrap');
+  const levelDeg = document.getElementById('levelDeg');
+  const levelStatus = document.getElementById('levelStatus');
+  const bubble = document.getElementById('bubble');
+  const bubbleDot = document.getElementById('bubbleDot');
+  const dataRow = document.getElementById('dataRow');
+
+  const ticksG = document.getElementById('ticks');
+  const labelsG = document.getElementById('labels');
+  const cx = 140, cy = 140;
+  const cardinals = {0:'N', 90:'E', 180:'S', 270:'W'};
+  const interLabels = {45:'NE', 135:'SE', 225:'SW', 315:'NW'};
+
+  for (let deg = 0; deg < 360; deg += 10) {
+    const rad = (deg - 90) * Math.PI / 180;
+    const isMajor = deg % 30 === 0;
+    const outerR = 132;
+    const innerR = isMajor ? 116 : 124;
+    const x1 = cx + outerR * Math.cos(rad);
+    const y1 = cy + outerR * Math.sin(rad);
+    const x2 = cx + innerR * Math.cos(rad);
+    const y2 = cy + innerR * Math.sin(rad);
+    const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    tick.setAttribute('x1', x1.toFixed(2));
+    tick.setAttribute('y1', y1.toFixed(2));
+    tick.setAttribute('x2', x2.toFixed(2));
+    tick.setAttribute('y2', y2.toFixed(2));
+    tick.setAttribute('stroke', cardinals[deg] !== undefined ? '#e8281c' : '#3a3a3a');
+    tick.setAttribute('stroke-width', isMajor ? '2' : '1');
+    ticksG.appendChild(tick);
+  }
+
+  for (let deg = 0; deg < 360; deg += 30) {
+    const rad = (deg - 90) * Math.PI / 180;
+    const labelR = 98;
+    const x = cx + labelR * Math.cos(rad);
+    const y = cy + labelR * Math.sin(rad);
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', x.toFixed(2));
+    text.setAttribute('y', y.toFixed(2));
+    let label = cardinals[deg] || interLabels[deg] || String(deg);
+    let isCardinal = cardinals[deg] !== undefined;
+    text.setAttribute('fill', isCardinal ? '#e8281c' : '#9a9a9a');
+    text.setAttribute('font-size', isCardinal ? '17' : '11');
+    text.setAttribute('font-weight', isCardinal ? '700' : '500');
+    text.textContent = label;
+    labelsG.appendChild(text);
+  }
+
+  function headingToCardinal(h) {
+    const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    return dirs[Math.round(h / 22.5) % 16];
+  }
+
+  function updateCompass(heading) {
+    heading = ((heading % 360) + 360) % 360;
+    dial.style.transform = 'rotate(' + (-heading) + 'deg)';
+    degText.textContent = Math.round(heading) + '°';
+    dirText.textContent = headingToCardinal(heading);
+  }
+
+  // ---- Bubble level ----
+  let wasLevel = false;
+  const LEVEL_TOLERANCE = 1.0;   // degrees within which we call it "level"
+  const MAX_BUBBLE_ANGLE = 30;   // degrees mapped to full bubble travel
+  const TRAVEL_RADIUS = 78;      // px (svg units) bubble center can move from middle
+
+  function updateLevel(beta, gamma) {
+    if (beta === null || beta === undefined || gamma === null || gamma === undefined) return;
+
+    // Normalize: when phone lies flat face-up, beta & gamma hover near 0.
+    let b = Math.max(-90, Math.min(90, beta));
+    let g = Math.max(-90, Math.min(90, gamma));
+
+    let bx = Math.max(-MAX_BUBBLE_ANGLE, Math.min(MAX_BUBBLE_ANGLE, g)) / MAX_BUBBLE_ANGLE * TRAVEL_RADIUS;
+    let by = Math.max(-MAX_BUBBLE_ANGLE, Math.min(MAX_BUBBLE_ANGLE, b)) / MAX_BUBBLE_ANGLE * TRAVEL_RADIUS;
+
+    const mag = Math.sqrt(bx * bx + by * by);
+    if (mag > TRAVEL_RADIUS) {
+      bx = (bx / mag) * TRAVEL_RADIUS;
+      by = (by / mag) * TRAVEL_RADIUS;
+    }
+
+    const bubbleX = (140 + bx).toFixed(1);
+    const bubbleY = (140 + by).toFixed(1);
+    bubble.setAttribute('cx', bubbleX);
+    bubble.setAttribute('cy', bubbleY);
+    bubbleDot.setAttribute('cx', bubbleX);
+    bubbleDot.setAttribute('cy', bubbleY);
+
+    const totalTilt = Math.sqrt(b * b + g * g);
+    levelDeg.textContent = totalTilt.toFixed(1) + '°';
+
+    const isLevelNow = Math.abs(b) < LEVEL_TOLERANCE && Math.abs(g) < LEVEL_TOLERANCE;
+    if (isLevelNow) {
+      bubble.classList.add('is-level');
+      bubbleDot.classList.add('is-level');
+      levelStatus.textContent = 'LEVEL';
+      levelStatus.style.color = 'var(--gold)';
+      if (!wasLevel && navigator.vibrate) {
+        navigator.vibrate(40);
+      }
+      wasLevel = true;
+    } else {
+      bubble.classList.remove('is-level');
+      bubbleDot.classList.remove('is-level');
+      levelStatus.textContent = 'ADJUST TO LEVEL';
+      levelStatus.style.color = '';
+      wasLevel = false;
+    }
+  }
+
+  let usingFallback = true;
+  let supported = false;
+  let smoothedHeading = null;
+  const SMOOTH_FACTOR = 0.15;
+
+  function shortestAngleDelta(a, b) {
+    let d = (b - a) % 360;
+    if (d > 180) d -= 360;
+    if (d < -180) d += 360;
+    return d;
+  }
+
+  function smoothAndUpdate(rawHeading) {
+    if (smoothedHeading === null) {
+      smoothedHeading = rawHeading;
+    } else {
+      const delta = shortestAngleDelta(smoothedHeading, rawHeading);
+      smoothedHeading = (smoothedHeading + delta * SMOOTH_FACTOR + 360) % 360;
+    }
+    updateCompass(smoothedHeading);
+  }
+
+  function handleOrientation(event) {
+    let heading = null;
+    if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
+      heading = event.webkitCompassHeading;
+    } else if (event.alpha !== null && event.alpha !== undefined) {
+      heading = 360 - event.alpha;
+    }
+    if (heading !== null) {
+      supported = true;
+      usingFallback = false;
+      const isSecure = window.isSecureContext;
+      statusMsg.textContent = isSecure ? 'LIVE • DEVICE ORIENTATION' : 'LIVE (INSECURE CONTEXT)';
+      smoothAndUpdate(heading);
+    }
+
+    if (event.beta !== null && event.beta !== undefined) {
+      nlVal.textContent = event.beta.toFixed(1) + '°';
+    }
+    if (event.gamma !== null && event.gamma !== undefined) {
+      elVal.textContent = event.gamma.toFixed(1) + '°';
+    }
+    updateLevel(event.beta, event.gamma);
+  }
+
+  function startListening() {
+    window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+    window.addEventListener('deviceorientation', handleOrientation, true);
+    setTimeout(() => {
+      if (!supported) {
+        if (!window.isSecureContext) {
+          statusMsg.textContent = 'BLOCKED • NEEDS HTTPS, NOT file://';
+        } else {
+          statusMsg.textContent = 'NO SENSOR DETECTED • DEMO MODE';
+        }
+        startDemoMode();
+      }
+    }, 1800);
+  }
+
+  function startDemoMode() {
+    let demoHeading = 0;
+    let velocity = 0;
+    let t = 0;
+    setInterval(() => {
+      if (usingFallback) {
+        velocity += (Math.random() - 0.5) * 0.4;
+        velocity = Math.max(-1.2, Math.min(1.2, velocity));
+        demoHeading = (demoHeading + velocity + 360) % 360;
+        updateCompass(demoHeading);
+
+        t += 0.05;
+        const demoBeta = Math.sin(t * 0.6) * 6 + (Math.random() - 0.5) * 0.8;
+        const demoGamma = Math.cos(t * 0.45) * 5 + (Math.random() - 0.5) * 0.8;
+        nlVal.textContent = demoBeta.toFixed(1) + '°';
+        elVal.textContent = demoGamma.toFixed(1) + '°';
+        updateLevel(demoBeta, demoGamma);
+      }
+    }, 50);
+  }
+
+  function needsIOSPermission() {
+    return typeof DeviceOrientationEvent !== 'undefined' &&
+           typeof DeviceOrientationEvent.requestPermission === 'function';
+  }
+
+  if (needsIOSPermission()) {
+    statusMsg.textContent = 'TAP TO ENABLE COMPASS';
+    permBtn.style.display = 'inline-block';
+    permBtn.addEventListener('click', function() {
+      DeviceOrientationEvent.requestPermission().then(function(state) {
+        if (state === 'granted') {
+          permBtn.style.display = 'none';
+          statusMsg.textContent = 'Initializing…';
+          startListening();
+        } else {
+          statusMsg.textContent = 'PERMISSION DENIED • DEMO MODE';
+          startDemoMode();
+        }
+      }).catch(function() {
+        statusMsg.textContent = 'PERMISSION ERROR • DEMO MODE';
+        startDemoMode();
+      });
+    });
+  } else if (window.DeviceOrientationEvent) {
+    startListening();
+  } else {
+    statusMsg.textContent = 'COMPASS NOT SUPPORTED • DEMO MODE';
+    startDemoMode();
+  }
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      if (pos.coords.altitude !== null && pos.coords.altitude !== undefined) {
+        document.getElementById('elevVal').textContent = Math.round(pos.coords.altitude) + ' m';
+      } else {
+        document.getElementById('elevVal').textContent = 'N/A';
+      }
+    }, function() {
+      document.getElementById('elevVal').textContent = 'N/A';
+    }, { enableHighAccuracy: true, timeout: 5000 });
+  }
+
+  let onLevel = false;
+  function setView(toLevel) {
+    onLevel = toLevel;
+    if (onLevel) {
+      navLevel.style.color = '#f0f0f0';
+      navLevel.style.borderBottomColor = '#e8281c';
+      navCompass.style.color = '#6b6b6b';
+      navCompass.style.borderBottomColor = '#2a2a2a';
+      compassReadout.style.display = 'none';
+      compassWrap.style.display = 'none';
+      levelReadout.style.display = 'block';
+      levelWrap.style.display = 'block';
+      dataRow.style.display = 'none';
+    } else {
+      navLevel.style.color = '#6b6b6b';
+      navLevel.style.borderBottomColor = '#2a2a2a';
+      navCompass.style.color = '#f0f0f0';
+      navCompass.style.borderBottomColor = '#e8281c';
+      compassReadout.style.display = 'block';
+      compassWrap.style.display = 'block';
+      levelReadout.style.display = 'none';
+      levelWrap.style.display = 'none';
+      dataRow.style.display = 'flex';
+    }
+  }
+  navLevel.addEventListener('click', function() { setView(true); });
+  navCompass.addEventListener('click', function() { setView(false); });
+})();
+</script>
+</body>
+</html>
